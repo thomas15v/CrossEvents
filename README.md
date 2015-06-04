@@ -9,7 +9,6 @@ A small Library to call sponge events across servers
     [...]
     <repositories>
         [...]
-        <!-- Bukkit can be found at the following repository -->
         <repository>
           <id>thomas5v-repo</id>
           <url>http://repo.thomas15v.net/</url>
@@ -18,7 +17,6 @@ A small Library to call sponge events across servers
     [...]
       <dependencies>
         [...]
-        <!-- Dependency information --> 
         <dependency>
         <groupId>com.thomas15v</groupId>
         <artifactId>crossevents</artifactId>
