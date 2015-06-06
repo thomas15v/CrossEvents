@@ -1,6 +1,7 @@
 package com.thomas15v.crossevents.network.packet.packets;
 
-import com.google.gson.Gson;
+import com.google.common.base.Optional;
+import com.thomas15v.crossevents.CrossEventsPlugin;
 import com.thomas15v.crossevents.network.packet.PacketHandler;
 import org.spongepowered.api.event.Event;
 
@@ -10,10 +11,18 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Created by thomas15v on 4/06/15.
+ *
+ * Packet Layout
+ *
+ * HOP number
+ * event class name
+ * eventdata
+ * eventid
+ *
  */
 public class EventPacket extends Packet {
-    private Event event;
+    private Optional<Event> event;
+    private String eventData;
     private UUID eventId;
     private int hop = 0;
 
@@ -21,26 +30,30 @@ public class EventPacket extends Packet {
 
     public EventPacket(UUID sender, Event event){
         super(sender);
-        this.event = event;
+        this.event = Optional.of(event);
         eventId = UUID.randomUUID();
     }
 
-    public Event getEvent() {
+    public Optional<Event> getEvent() {
         return event;
     }
 
     @Override
     public void read(BufferedReader in) throws IOException {
-        try {
-            hop = Integer.parseInt(in.readLine());
-            Class<? extends Event> clazz = (Class<? extends Event>) Class.forName(in.readLine());
-            event = gson.fromJson(in.readLine(), clazz);
-            eventId = UUID.fromString(in.readLine());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        hop = Integer.parseInt(in.readLine());
+        event = parseEvent(in.readLine(), in.readLine());
+        eventId = UUID.fromString(in.readLine());
         super.read(in);
+    }
+
+    private Optional<Event> parseEvent(String eventClazz, String eventData){
+        this.eventData = eventData;
+        try {
+            return Optional.of(gson.fromJson(eventData,(Class<? extends Event>) Class.forName(eventClazz)));
+        } catch (ClassNotFoundException e) {
+            CrossEventsPlugin.getInstance().getLogger().debug("Could not find event class " + eventClazz);
+            return Optional.absent();
+        }
     }
 
     @Override

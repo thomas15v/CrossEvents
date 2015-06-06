@@ -79,18 +79,19 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
 
     @Override
     public void handle(EventPacket packet) {
-        if (packet.getSender().equals(uuid))
-        {
-            callbackEvents.put(packet.getEventId(), packet.getEvent());
-        }else {
-            Event event = packet.getEvent();
-            logger.debug(event.toString());
-            //todo: remove this for sure
-            if (eventManager != null)
-                eventManager.post(event);
-            if (event instanceof Returnable || event instanceof Cancellable)
-                writePacket(packet);
-        }
+        if (packet.getEvent().isPresent())
+            if (packet.getSender().equals(uuid))
+            {
+                callbackEvents.put(packet.getEventId(), packet.getEvent().get());
+            }else {
+                Event event = packet.getEvent().get();
+                logger.debug(event.toString());
+                //todo: remove this for sure
+                if (eventManager != null)
+                    eventManager.post(event);
+                if (event instanceof Returnable || event instanceof Cancellable)
+                    writePacket(packet);
+            }
     }
 
     public void reconnect() throws IOException {
