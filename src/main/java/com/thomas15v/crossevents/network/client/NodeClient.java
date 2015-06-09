@@ -160,7 +160,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     @Override
     public <T extends Event> T callEvent(T event, UUID uuid) {
         if (event instanceof Returnable || event instanceof Cancellable) {
-            EventPacket packet = new EventPacket(uuid, event, uuid);
+            EventPacket packet = new EventPacket(this.uuid, event, uuid);
             writePacket(packet);
             int ticks = 10;
             while (!callbackEvents.containsKey(packet.getEventId()))
