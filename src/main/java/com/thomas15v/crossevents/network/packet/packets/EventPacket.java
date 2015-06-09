@@ -77,7 +77,10 @@ public class EventPacket extends Packet {
             writeln(out, "ALL");
         writeln(out, String.valueOf(hop));
         writeln(out, event.getClass().getName());
-        writeln(out, gson.toJson(event));
+        if (event.isPresent())
+            writeln(out, gson.toJson(event));
+        else
+            writeln(out, eventData);
         writeln(out, eventId.toString());
         super.write(out);
     }
