@@ -99,7 +99,7 @@ public class NodeServer implements Runnable {
     }
 
     public Optional<Server> getServer(int i){
-        if (serverList.size() != i)
+        if (serverList.size() > i)
             return Optional.fromNullable(serverList.get(i));
         else
             return Optional.absent();

@@ -40,14 +40,13 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     private EventManager eventManager;
     private Map<UUID, Server> onlineServers = new HashMap<UUID, Server>();
 
-    public NodeClient(String hostname, int port, String pwd, UUID uuid, String servername,  EventManager eventManager) throws IOException {
+    public NodeClient(String hostname, int port, String pwd, UUID uuid, String servername,  EventManager eventManager){
         this.servername = servername;
         this.eventManager = eventManager;
         this.hostname = hostname;
         this.port = port;
         this.pwd = pwd;
         this.uuid = uuid;
-        connect();
     }
 
     public void connect() throws IOException {
