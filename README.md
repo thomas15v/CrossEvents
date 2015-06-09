@@ -9,7 +9,6 @@ A small Library to call sponge events across servers
     [...]
     <repositories>
         [...]
-        <!-- Bukkit can be found at the following repository -->
         <repository>
           <id>thomas5v-repo</id>
           <url>http://repo.thomas15v.net/</url>
@@ -18,7 +17,6 @@ A small Library to call sponge events across servers
     [...]
       <dependencies>
         [...]
-        <!-- Dependency information --> 
         <dependency>
         <groupId>com.thomas15v</groupId>
         <artifactId>crossevents</artifactId>
@@ -47,49 +45,54 @@ dependencies {
 
 ##Example Project
 ```java
-package com.thomas15v.crossevents.examples;
-
 import com.thomas15v.crossevents.api.CrossEventService;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.event.AbstractEvent;
 import org.spongepowered.api.event.Subscribe;
 import org.spongepowered.api.event.entity.player.PlayerChatEvent;
+import org.spongepowered.api.event.state.ServerStartedEvent;
+import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.text.Texts;
 
-public class CrossChat {
-
-    private final CrossEventService service;
+@Plugin(id="CrossChat", name="CrossChat", version="0.1", dependencies="required-after:CrossEvents;")
+public class CrossChat
+{
+    private CrossEventService service;
     private Game game;
 
-    public CrossChat(Game game, Object plugin){
-        this.game = game;
-        game.getEventManager().register(plugin, this);
-        this.service = game.getServiceManager().provide(CrossEventService.class).get();
+    @Subscribe
+    public void onEnable(ServerStartedEvent event)
+    {
+        this.game = event.getGame();
+        this.service = ((CrossEventService)this.game.getServiceManager().provide(CrossEventService.class).get());
     }
 
-
-    public class CrossChatEvent extends AbstractEvent {
+    public class CrossChatEvent
+            extends AbstractEvent
+    {
         private String message;
 
-        public CrossChatEvent(String message){
+        public CrossChatEvent(String message)
+        {
             this.message = message;
         }
 
-        public String getMessage() {
-            return message;
+        public String getMessage()
+        {
+            return this.message;
         }
     }
 
     @Subscribe
-    public void PlayerChatEvent(CrossChatEvent event){
-        game.getServer().getBroadcastSink().sendMessage(Texts.parseJson(event.getMessage()));
+    public void PlayerChatEvent(CrossChatEvent event)
+    {
+        this.game.getServer().getBroadcastSink().sendMessage(Texts.parseJson(event.getMessage()));
     }
 
     @Subscribe
-    public void PlayerChatEvent(PlayerChatEvent event){
-        service.callEvent(new CrossChatEvent(Texts.toJson(event.getNewMessage())));
+    public void PlayerChatEvent(PlayerChatEvent event)
+    {
+        this.service.callEvent(new CrossChatEvent(Texts.toJson(event.getNewMessage())));
     }
 }
-
-
 ```
