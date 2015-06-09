@@ -3,7 +3,7 @@ apply plugin: 'maven'
 
 sourceCompatibility = 1.6
 group = "com.thomas15v"
-version = '0.1'
+version = '0.2-beta'
 
 repositories {
     mavenCentral()

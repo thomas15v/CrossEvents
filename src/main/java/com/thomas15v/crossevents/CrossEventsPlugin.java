@@ -20,7 +20,7 @@ import java.io.IOException;
 /**
  * Created by thomas15v on 4/06/15.
  */
-@Plugin(id = "CrossEvents", name = "CrossEvents", version = "0.1")
+@Plugin(id = "CrossEvents", name = "CrossEvents", version = "0.2-beta")
 public class CrossEventsPlugin {
 
     private static CrossEventsPlugin plugin;
