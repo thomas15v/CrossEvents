@@ -162,7 +162,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
         if (event instanceof Returnable || event instanceof Cancellable) {
             EventPacket packet = new EventPacket(this.uuid, event, target);
             writePacket(packet);
-            int ticks = 10;
+            int ticks = onlineServers.size() * 3;
             while (!callbackEvents.containsKey(packet.getEventId()))
                 try {
                     logger.debug("Waiting");
