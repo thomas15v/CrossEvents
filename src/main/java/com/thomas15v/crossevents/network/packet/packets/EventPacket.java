@@ -24,6 +24,7 @@ import java.util.UUID;
 public class EventPacket extends Packet {
     private Optional<Event> event;
     private String eventData;
+    private String eventClass;
     private UUID eventId;
     private int hop = 0;
     private Optional<UUID> target;
@@ -59,12 +60,13 @@ public class EventPacket extends Packet {
         super.read(in);
     }
 
-    private Optional<Event> parseEvent(String eventClazz, String eventData){
+    private Optional<Event> parseEvent(String eventClass, String eventData){
         this.eventData = eventData;
+        this.eventClass = eventClass;
         try {
-            return Optional.of(gson.fromJson(eventData,(Class<? extends Event>) Class.forName(eventClazz)));
+            return Optional.of(gson.fromJson(eventData,(Class<? extends Event>) Class.forName(eventClass)));
         } catch (ClassNotFoundException e) {
-            CrossEventsPlugin.getInstance().getLogger().debug("Could not find event class " + eventClazz);
+            CrossEventsPlugin.getInstance().getLogger().debug("Could not find event class " + eventClass);
             return Optional.absent();
         }
     }
@@ -76,11 +78,14 @@ public class EventPacket extends Packet {
         else
             writeln(out, "ALL");
         writeln(out, String.valueOf(hop));
-        writeln(out, event.getClass().getName());
-        if (event.isPresent())
-            writeln(out, gson.toJson(event));
-        else
+        if (event.isPresent()) {
+            writeln(out, event.get().getClass().getName());
+            writeln(out, gson.toJson(event.get()));
+        }
+        else {
+            writeln(out, eventClass);
             writeln(out, eventData);
+        }
         writeln(out, eventId.toString());
         super.write(out);
     }
