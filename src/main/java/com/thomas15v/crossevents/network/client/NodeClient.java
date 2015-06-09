@@ -158,21 +158,21 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     }
 
     @Override
-    public <T extends Event> T callEvent(T event, UUID uuid) {
+    public <T extends Event> T callEvent(T event, UUID target) {
         if (event instanceof Returnable || event instanceof Cancellable) {
-            EventPacket packet = new EventPacket(this.uuid, event, uuid);
+            EventPacket packet = new EventPacket(this.uuid, event, target);
             writePacket(packet);
             int ticks = 10;
             while (!callbackEvents.containsKey(packet.getEventId()))
                 try {
                     logger.debug("Waiting");
-                    Thread.sleep(100);
+                    Thread.sleep(1);
                     ticks--;
                     if (ticks == 0) {
                         logger.warn("Return event took to long, returning normal event!");
                         return event;
                     }
-                } catch (InterruptedException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             Event returnevent = callbackEvents.get(packet.getEventId());
@@ -180,7 +180,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
             return (T) returnevent;
         }
         else {
-            writePacket(new EventPacket(uuid, event, uuid));
+            writePacket(new EventPacket(target, event, target));
             return event;
         }
     }

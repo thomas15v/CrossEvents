@@ -67,7 +67,7 @@ public class Server extends PacketHandler implements Runnable, ICrossConnectable
 
     @Override
     public void handle(EventPacket packet) {
-        if (packet.getEvent() instanceof Returnable || packet.getEvent() instanceof Cancellable){
+        if (packet.getEvent().get() instanceof Returnable || packet.getEvent().get() instanceof Cancellable){
             Optional<Server> server = nodeserver.getServer(packet.getHop());
             packet.hop();
             if (server.isPresent()){

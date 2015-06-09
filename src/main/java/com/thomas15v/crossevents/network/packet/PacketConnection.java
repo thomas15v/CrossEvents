@@ -27,10 +27,10 @@ public class PacketConnection {
 
 
     public synchronized void writePacket(Packet packet) throws IOException {
-        logger.debug("write " + packet);
         out.write(String.valueOf(packetManager.getIdForPacket(packet)) + "\n");
         packet.write(out);
         out.flush();
+        logger.debug("write " + packet);
     }
 
     public Optional<Packet> readPacket() throws IOException {
