@@ -1,11 +1,14 @@
 package com.thomas15v.crossevents.network.packet.packets;
 
+import com.google.common.base.Optional;
 import com.google.gson.Gson;
+import com.thomas15v.crossevents.CrossEventsPlugin;
 import com.thomas15v.crossevents.network.packet.PacketHandler;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -31,7 +34,8 @@ public abstract class Packet {
     }
 
     protected void writeln(BufferedWriter out, String string) throws IOException {
-        out.write(string + "\n");
+        out.write(string);
+        out.newLine();
     }
 
     abstract public void handle(PacketHandler handler) throws Exception;

@@ -4,9 +4,12 @@ import com.google.common.base.Optional;
 import com.thomas15v.crossevents.CrossEventsPlugin;
 import com.thomas15v.crossevents.api.Returnable;
 import com.thomas15v.crossevents.network.ICrossConnectable;
+import com.thomas15v.crossevents.network.packet.PacketConnection;
 import com.thomas15v.crossevents.network.packet.PacketHandler;
 import com.thomas15v.crossevents.network.packet.packets.EventPacket;
+import com.thomas15v.crossevents.network.packet.packets.LogoutPacket;
 import com.thomas15v.crossevents.network.packet.packets.Packet;
+import com.thomas15v.crossevents.network.packet.packets.ServerInformationPacket;
 import org.slf4j.Logger;
 import org.spongepowered.api.event.Cancellable;
 
@@ -19,14 +22,16 @@ import java.util.UUID;
 public class Server extends PacketHandler implements Runnable, ICrossConnectable {
 
     private UUID uuid;
+    private String name;
     private PacketConnection connection;
     private NodeServer nodeserver;
     private Thread thread;
     private boolean connected = true;
     private Logger logger = CrossEventsPlugin.getInstance().getLogger();
 
-    public Server(UUID uuid, PacketConnection connection, NodeServer server) {
+    public Server(UUID uuid, String name,  PacketConnection connection, NodeServer server) {
         this.uuid = uuid;
+        this.name = name;
         this.connection = connection;
         this.nodeserver = server;
         this.thread = new Thread(this);
@@ -43,8 +48,10 @@ public class Server extends PacketHandler implements Runnable, ICrossConnectable
                 }
             }
             catch (Exception e) {
-                e.printStackTrace();
-                disconect("SERVER " + uuid + " HAS DISCONNECTED UNEXPECTEDLY!");
+                if (e instanceof NumberFormatException)
+                    disconect("Server " + uuid + " Has Disconnected!");
+                else
+                    disconect("Server " + uuid + " Has Disconnected!: " + e.toString());
             }
         }
     }
@@ -52,7 +59,10 @@ public class Server extends PacketHandler implements Runnable, ICrossConnectable
     public void disconect(String message){
         logger.info(message);
         connected = false;
+        thread.interrupt();
+        connection.close();
         nodeserver.removeServer(this);
+        nodeserver.updateServers(ServerInformationPacket.Status.OFFLINE, this);
     }
 
     @Override
@@ -73,6 +83,13 @@ public class Server extends PacketHandler implements Runnable, ICrossConnectable
     }
 
     @Override
+    public void handle(LogoutPacket packet) throws Exception {
+        thread.interrupt();
+        connection.close();
+        disconect(uuid + " Has disconnected!");
+    }
+
+    @Override
     public void writePacket(Packet packet) {
         try {
             connection.writePacket(packet);
@@ -83,5 +100,9 @@ public class Server extends PacketHandler implements Runnable, ICrossConnectable
 
     public UUID getUniqueId() {
         return uuid;
+    }
+
+    public String getName() {
+        return name;
     }
 }

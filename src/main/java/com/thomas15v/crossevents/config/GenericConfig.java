@@ -30,7 +30,9 @@ public abstract class GenericConfig {
     private void checkVersion() throws IOException {
         int configversion = getRoot().getNode(VERSION).getInt();
         if (configversion < this.version){
+            getRoot().getNode(VERSION).setValue(this.version);
             migrate(configversion);
+            save();
         }
     }
 

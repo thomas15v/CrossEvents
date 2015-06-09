@@ -2,17 +2,20 @@ package com.thomas15v.crossevents.network.server;
 
 import com.google.common.base.Optional;
 import com.thomas15v.crossevents.CrossEventsPlugin;
-import com.thomas15v.crossevents.network.packet.packets.EventPacket;
+import com.thomas15v.crossevents.network.packet.PacketConnection;
+import com.thomas15v.crossevents.network.packet.packets.ServerInformationPacket;
 import com.thomas15v.crossevents.network.packet.packets.LoginPacket;
 import com.thomas15v.crossevents.network.packet.PacketManager;
 import com.thomas15v.crossevents.network.packet.packets.LogoutPacket;
 import com.thomas15v.crossevents.network.packet.packets.Packet;
 import org.slf4j.Logger;
+import org.spongepowered.api.event.Event;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -63,14 +66,15 @@ public class NodeServer implements Runnable {
     public void run() {
         while (run) {
             try {
-                //todo: add authentitication and encryption
                 Socket incom = serversocket.accept();
                 PacketConnection connection = new PacketConnection(incom, packetManager);
                 LoginPacket loginPacket = (LoginPacket) connection.readPacket().get();
                 if (loginPacket.getPwd().equals(pwd)) {
                     if (!getServer(loginPacket.getSender()).isPresent()){
-                        serverList.add(new Server(loginPacket.getSender(), connection, this));
+                        Server server = new Server(loginPacket.getSender(), loginPacket.getName(), connection, this);
+                        serverList.add(server);
                         logger.info(loginPacket.getSender() + " logged in!");
+                        updateServers(ServerInformationPacket.Status.ONLINE, server);
                     }else
                         connection.writePacket(new LogoutPacket(uuid, "DUPLICATEDID"));
                 }
@@ -82,6 +86,12 @@ public class NodeServer implements Runnable {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void updateServers(ServerInformationPacket.Status status, Server... servers){
+        for (Server server : servers)
+                writePacket(new ServerInformationPacket(uuid, server, status));
+
     }
 
     public void removeServer(Server server){

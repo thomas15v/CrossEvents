@@ -14,9 +14,19 @@ public class Config extends GenericConfig {
     private final String HOSTNAME = "HostName";
     private final String PORT = "Port";
     private final String SERVERID = "ServerId";
+    private final String SERVERNAME = "ServerName";
 
     public Config(File configFile) throws IOException {
-        super(configFile, 1);
+        super(configFile, 2);
+    }
+
+    @Override
+    protected void migrate(int oldversion) {
+        switch (oldversion){
+            case 1:
+                getRoot().getNode(SERVERNAME).setValue("Server");
+                break;
+        }
     }
 
     @Override
@@ -26,6 +36,7 @@ public class Config extends GenericConfig {
         getRoot().getNode(HOSTNAME).setValue("localhost");
         getRoot().getNode(PORT).setValue(3947);
         getRoot().getNode(SERVERID).setValue(UUID.randomUUID().toString());
+        getRoot().getNode(SERVERNAME).setValue("Server");
         super.generateDefaults();
     }
 
@@ -47,6 +58,10 @@ public class Config extends GenericConfig {
 
     public UUID getServerId(){
         return UUID.fromString(getRoot().getNode(SERVERID).getString());
+    }
+
+    public String getServerName(){
+        return getRoot().getNode(SERVERNAME).getString();
     }
 
     public void resetServerId(){

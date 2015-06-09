@@ -14,6 +14,7 @@ import java.util.UUID;
  *
  * Packet Layout
  *
+ * Target server
  * HOP number
  * event class name
  * eventdata
@@ -25,6 +26,7 @@ public class EventPacket extends Packet {
     private String eventData;
     private UUID eventId;
     private int hop = 0;
+    private Optional<UUID> target;
 
     public EventPacket(){}
 
@@ -32,6 +34,12 @@ public class EventPacket extends Packet {
         super(sender);
         this.event = Optional.of(event);
         eventId = UUID.randomUUID();
+        target = Optional.absent();
+    }
+
+    public EventPacket(UUID sender, Event event, UUID target){
+        this(sender, event);
+        this.target = Optional.fromNullable(target);
     }
 
     public Optional<Event> getEvent() {
@@ -40,6 +48,11 @@ public class EventPacket extends Packet {
 
     @Override
     public void read(BufferedReader in) throws IOException {
+        String target = in.readLine();
+        if (target.equals("ALL"))
+            this.target = Optional.absent();
+        else
+            this.target = Optional.of(UUID.fromString(target));
         hop = Integer.parseInt(in.readLine());
         event = parseEvent(in.readLine(), in.readLine());
         eventId = UUID.fromString(in.readLine());
@@ -58,6 +71,10 @@ public class EventPacket extends Packet {
 
     @Override
     public void write(BufferedWriter out) throws IOException {
+        if (target.isPresent())
+            writeln(out, target.get().toString());
+        else
+            writeln(out, "ALL");
         writeln(out, String.valueOf(hop));
         writeln(out, event.getClass().getName());
         writeln(out, gson.toJson(event));
@@ -80,5 +97,9 @@ public class EventPacket extends Packet {
 
     public UUID getEventId() {
         return eventId;
+    }
+
+    public Optional<UUID> getTarget() {
+        return target;
     }
 }

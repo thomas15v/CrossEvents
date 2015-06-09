@@ -13,23 +13,27 @@ import java.util.UUID;
 public class LoginPacket extends Packet {
 
     private String pwd;
+    private String name;
 
     public LoginPacket(){}
 
-    public LoginPacket(UUID uuid, String pwd){
+    public LoginPacket(UUID uuid, String pwd, String name){
         super(uuid);
         this.pwd = pwd;
+        this.name = name;
     }
 
     @Override
     public void read(BufferedReader in) throws IOException {
         this.pwd = in.readLine();
+        this.name = in.readLine();
         super.read(in);
     }
 
     @Override
     public void write(BufferedWriter out) throws IOException {
         writeln(out, pwd);
+        writeln(out, name);
         super.write(out);
     }
 
@@ -40,5 +44,9 @@ public class LoginPacket extends Packet {
 
     public String getPwd() {
         return pwd;
+    }
+
+    public String getName() {
+        return name;
     }
 }

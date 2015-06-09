@@ -3,12 +3,12 @@ package com.thomas15v.crossevents;
 import com.google.inject.Inject;
 import com.thomas15v.crossevents.api.CrossEventService;
 import com.thomas15v.crossevents.config.Config;
-import com.thomas15v.crossevents.network.client.NodeClient;
 import com.thomas15v.crossevents.network.server.NodeServer;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.event.Subscribe;
 import org.spongepowered.api.event.state.ServerStartedEvent;
+import org.spongepowered.api.event.state.ServerStoppingEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.ProviderExistsException;
 import org.spongepowered.api.service.config.ConfigDir;
@@ -41,15 +41,12 @@ public class CrossEventsPlugin {
     private File defaultConfig;
 
     private NodeServer server;
-    private NodeClient client;
+    private com.thomas15v.crossevents.network.client.NodeClient client;
     private Config config;
 
-    //todo: remove this test
-    private Game game;
 
     @Subscribe
     public void onEnable(ServerStartedEvent event){
-        this.game = event.getGame();
         this.plugin = this;
         if (!configDir.exists())
             configDir.mkdirs();
@@ -69,7 +66,7 @@ public class CrossEventsPlugin {
             }
 
         try {
-            this.client = new NodeClient(config.getHostName(), config.getPort(), config.getPwd(), config.getServerId(), event.getGame().getEventManager());
+            this.client = new com.thomas15v.crossevents.network.client.NodeClient(config.getHostName(), config.getPort(), config.getPwd(), config.getServerId(), config.getServerName(), event.getGame().getEventManager());
             logger.info("CrossEventsClient connecting to " + config.getHostName() + ":" + config.getPort());
             this.client.start();
         } catch (IOException e) {
@@ -81,6 +78,11 @@ public class CrossEventsPlugin {
         } catch (ProviderExistsException e) {
             logger.error("Ehm, Seems somebody already took the exact classname of my service.... . Does this make any sense ? Go check your plugins if their aren't 2 versions of this plugin... .");
         }
+    }
+
+    public void onServerStopping(ServerStoppingEvent event){
+        logger.info("Disconnecting Client");
+        client.stop();
     }
 
     public Logger getLogger() {

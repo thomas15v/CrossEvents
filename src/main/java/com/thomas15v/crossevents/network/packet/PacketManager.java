@@ -1,10 +1,7 @@
 package com.thomas15v.crossevents.network.packet;
 
 import com.google.common.base.Optional;
-import com.thomas15v.crossevents.network.packet.packets.EventPacket;
-import com.thomas15v.crossevents.network.packet.packets.LoginPacket;
-import com.thomas15v.crossevents.network.packet.packets.LogoutPacket;
-import com.thomas15v.crossevents.network.packet.packets.Packet;
+import com.thomas15v.crossevents.network.packet.packets.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -24,6 +21,7 @@ public class PacketManager {
         registerPacket(EventPacket.class);
         registerPacket(LoginPacket.class);
         registerPacket(LogoutPacket.class);
+        registerPacket(ServerInformationPacket.class);
     }
 
     public void registerPacket(Class packet){

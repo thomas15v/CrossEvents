@@ -1,4 +1,4 @@
-package com.thomas15v.crossevents.network.server;
+package com.thomas15v.crossevents.network.packet;
 
 import com.google.common.base.Optional;
 import com.thomas15v.crossevents.CrossEventsPlugin;
@@ -26,7 +26,7 @@ public class PacketConnection {
     }
 
 
-    public void writePacket(Packet packet) throws IOException {
+    public synchronized void writePacket(Packet packet) throws IOException {
         logger.debug("write " + packet);
         out.write(String.valueOf(packetManager.getIdForPacket(packet)) + "\n");
         packet.write(out);
@@ -39,7 +39,12 @@ public class PacketConnection {
             packet.get().read(in);
        logger.debug("read " + packet.get());
         return packet;
-
     }
 
+    public synchronized void close(){
+        try {
+            socket.close();
+        } catch (IOException e) {
+        }
+    }
 }

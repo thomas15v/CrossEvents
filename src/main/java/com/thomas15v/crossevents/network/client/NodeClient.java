@@ -4,16 +4,13 @@ import com.google.common.base.Optional;
 import com.thomas15v.crossevents.CrossEventsPlugin;
 import com.thomas15v.crossevents.api.CrossEventService;
 import com.thomas15v.crossevents.api.Returnable;
+import com.thomas15v.crossevents.api.Server;
 import com.thomas15v.crossevents.network.ICrossConnectable;
 import com.thomas15v.crossevents.network.packet.PacketHandler;
-import com.thomas15v.crossevents.network.packet.packets.EventPacket;
-import com.thomas15v.crossevents.network.packet.packets.LoginPacket;
+import com.thomas15v.crossevents.network.packet.packets.*;
 import com.thomas15v.crossevents.network.packet.PacketManager;
-import com.thomas15v.crossevents.network.packet.packets.LogoutPacket;
-import com.thomas15v.crossevents.network.packet.packets.Packet;
-import com.thomas15v.crossevents.network.server.PacketConnection;
+import com.thomas15v.crossevents.network.packet.PacketConnection;
 import org.slf4j.Logger;
-import org.spongepowered.api.Game;
 import org.spongepowered.api.event.Cancellable;
 import org.spongepowered.api.event.Event;
 import org.spongepowered.api.service.event.EventManager;
@@ -30,23 +27,21 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
 
     private final String hostname;
     private final int port;
-    private Socket socket;
     private PacketManager packetManager;
     private PacketConnection connection;
     private UUID uuid;
     private volatile Map<UUID, Event> callbackEvents = new HashMap<UUID, Event>();
     private Thread thread;
     private String pwd;
-    private boolean connected = true;
-    private boolean run;
+    private boolean running = true;
+    private boolean connected;
     private Logger logger = CrossEventsPlugin.getInstance().getLogger();
+    private String servername;
     private EventManager eventManager;
+    private Map<UUID, Server> onlineServers = new HashMap<UUID, Server>();
 
-    public static void main(String[] args) throws IOException {
-        NodeClient client = new NodeClient("localhost", 3947, "123456", UUID.randomUUID(), null);
-    }
-
-    public NodeClient(String hostname, int port , String pwd, UUID uuid, EventManager eventManager) throws IOException {
+    public NodeClient(String hostname, int port, String pwd, UUID uuid, String servername,  EventManager eventManager) throws IOException {
+        this.servername = servername;
         this.eventManager = eventManager;
         this.hostname = hostname;
         this.port = port;
@@ -56,23 +51,29 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     }
 
     public void connect() throws IOException {
-        this.socket = new Socket();
-        this.socket.connect(new InetSocketAddress(hostname, port));
+        if (this.connection != null) {
+            this.connection.close();
+            connected = false;
+        }
+        Socket socket = new Socket();
+        socket.connect(new InetSocketAddress(hostname, port));
         this.packetManager = new PacketManager();
         this.connection = new PacketConnection(socket, packetManager);
-        this.connection.writePacket(new LoginPacket(uuid, pwd));
+        this.connection.writePacket(new LoginPacket(uuid, pwd, servername));
     }
 
     @Override
     public void run() {
-        while (connected){
+        while (running){
             try {
                 Optional<Packet> packet = connection.readPacket();
                 if (packet.isPresent())
                     packet.get().handle(this);
-            } catch (Exception e) {
-                e.printStackTrace();
-                break;
+            //}catch (InterruptedException e){
+            }
+            catch (Exception e) {
+                logger.info("Lost Connection with Server");
+                reconnect(true);
             }
         }
     }
@@ -86,27 +87,53 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
             }else {
                 Event event = packet.getEvent().get();
                 logger.debug(event.toString());
-                //todo: remove this for sure
-                if (eventManager != null)
-                    eventManager.post(event);
+                eventManager.post(event);
                 if (event instanceof Returnable || event instanceof Cancellable)
                     writePacket(packet);
             }
     }
 
-    public void reconnect() throws IOException {
-        stop();
-        connect();
-        start();
+    @Override
+    public void handle(ServerInformationPacket packet) throws Exception {
+        if (!connected) {
+            logger.info("Succesfully Connected to Server!");
+            connected = true;
+        }
+        if (packet.getStatus() == ServerInformationPacket.Status.OFFLINE)
+            onlineServers.remove(packet.getUniqueServerId());
+        else
+            onlineServers.put(packet.getUniqueServerId(), new CrossServer(this, packet.getUniqueServerId(), packet.getServerName()));
+    }
+
+    public void reconnect(boolean wait) {
+        if (wait) {
+            try {
+                connected = false;
+                Thread.sleep(1800);
+                logger.info("Reconnecting in 30 sec");
+                connect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+        else {
+            stop();
+            try {
+                connect();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            start();
+        }
     }
 
     @Override
     public void handle(LogoutPacket packet) throws Exception {
-        //Hey I know how anoying it can be, So I added an autoreset :). You love me right ? Love goes above pretty code!!!!! PRAISE LORD GABEN
         if (packet.getMessage().equals("DUPLICATEDID")) {
             CrossEventsPlugin.getInstance().getConfig().resetServerId();
             this.uuid = CrossEventsPlugin.getInstance().getConfig().getServerId();
-            reconnect();
+            reconnect(false);
         }
         else
             disconect("Kicked: " + packet.getMessage());
@@ -114,10 +141,8 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
 
     public void disconect(String message){
         logger.info(message);
-        connected = false;
+        running = false;
     }
-
-
 
     @Override
     public void writePacket(Packet packet) {
@@ -128,11 +153,15 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
         }
     }
 
-
     @Override
     public <T extends Event> T callEvent(T event) {
+        return callEvent(event, null);
+    }
+
+    @Override
+    public <T extends Event> T callEvent(T event, UUID uuid) {
         if (event instanceof Returnable || event instanceof Cancellable) {
-            EventPacket packet = new EventPacket(uuid, event);
+            EventPacket packet = new EventPacket(uuid, event, uuid);
             writePacket(packet);
             int ticks = 10;
             while (!callbackEvents.containsKey(packet.getEventId()))
@@ -152,10 +181,19 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
             return (T) returnevent;
         }
         else {
-            writePacket(new EventPacket(uuid, event));
+            writePacket(new EventPacket(uuid, event, uuid));
             return event;
         }
+    }
 
+    @Override
+    public Optional<Server> getServer(UUID uuid) {
+        return Optional.fromNullable(onlineServers.get(uuid));
+    }
+
+    @Override
+    public String getServerName() {
+        return servername;
     }
 
     public void start(){
@@ -164,11 +202,19 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     }
 
     public void stop(){
-        run = false;
+        running = false;
+        thread.interrupt();
+        connected = false;
+        writePacket(new LogoutPacket(uuid, "SHUTDOWN" ));
         try {
-            socket.close();
-        } catch (IOException e) {
+            Thread.sleep(10);
+            connection.close();
+        } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public boolean isConnected() {
+        return connected;
     }
 }

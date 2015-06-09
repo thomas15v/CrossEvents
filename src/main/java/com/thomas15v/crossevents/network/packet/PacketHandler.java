@@ -1,16 +1,22 @@
 package com.thomas15v.crossevents.network.packet;
 
-import com.thomas15v.crossevents.network.packet.packets.EventPacket;
-import com.thomas15v.crossevents.network.packet.packets.LogoutPacket;
-import com.thomas15v.crossevents.network.packet.packets.Packet;
+import com.thomas15v.crossevents.network.packet.packets.*;
 
-public class PacketHandler {
+public abstract class PacketHandler {
 
     public void handle(EventPacket packet) throws Exception {
         handle((Packet) packet);
     }
 
+    public void handle(LoginPacket packet) throws Exception {
+        handle((Packet) packet);
+    }
+
     public void handle(LogoutPacket packet) throws Exception {
+        handle((Packet) packet);
+    }
+
+    public void handle(ServerInformationPacket packet) throws Exception {
         handle((Packet) packet);
     }
 
