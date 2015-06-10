@@ -1,6 +1,7 @@
 package com.thomas15v.crossevents.network.packet.packets;
 
 import com.google.common.base.Optional;
+import com.google.gson.Gson;
 import com.thomas15v.crossevents.CrossEventsPlugin;
 import com.thomas15v.crossevents.network.packet.PacketHandler;
 import org.spongepowered.api.event.Event;
@@ -28,18 +29,20 @@ public class EventPacket extends Packet {
     private UUID eventId;
     private int hop = 0;
     private Optional<UUID> target;
+    private boolean returnable;
 
     public EventPacket(){}
 
-    public EventPacket(UUID sender, Event event){
+    public EventPacket(UUID sender, Event event, boolean returnable){
         super(sender);
+        this.returnable = returnable;
         this.event = Optional.of(event);
         eventId = UUID.randomUUID();
         target = Optional.absent();
     }
 
-    public EventPacket(UUID sender, Event event, UUID target){
-        this(sender, event);
+    public EventPacket(UUID sender, Event event, UUID target, boolean returnable){
+        this(sender, event, returnable);
         this.target = Optional.fromNullable(target);
     }
 
@@ -48,31 +51,35 @@ public class EventPacket extends Packet {
     }
 
     @Override
-    public void read(BufferedReader in) throws IOException {
+    public void read(BufferedReader in, Gson gson) throws IOException {
         String target = in.readLine();
         if (target.equals("ALL"))
             this.target = Optional.absent();
         else
             this.target = Optional.of(UUID.fromString(target));
         hop = Integer.parseInt(in.readLine());
-        event = parseEvent(in.readLine(), in.readLine());
+        event = parseEvent(in.readLine(), in.readLine(), gson);
+        //todo remove this
+        String test = in.readLine();
+        System.out.println(test);
+        returnable = Boolean.parseBoolean(test);
         eventId = UUID.fromString(in.readLine());
-        super.read(in);
+        super.read(in, gson);
     }
 
-    private Optional<Event> parseEvent(String eventClass, String eventData){
+    private Optional<Event> parseEvent(String eventClass, String eventData, Gson gson){
         this.eventData = eventData;
         this.eventClass = eventClass;
         try {
             return Optional.of(gson.fromJson(eventData,(Class<? extends Event>) Class.forName(eventClass)));
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             CrossEventsPlugin.getInstance().getLogger().debug("Could not find event class " + eventClass);
             return Optional.absent();
         }
     }
 
     @Override
-    public void write(BufferedWriter out) throws IOException {
+    public void write(BufferedWriter out, Gson gson) throws IOException {
         if (target.isPresent())
             writeln(out, target.get().toString());
         else
@@ -86,8 +93,10 @@ public class EventPacket extends Packet {
             writeln(out, eventClass);
             writeln(out, eventData);
         }
+        System.out.println(String.valueOf(returnable));
+        writeln(out, String.valueOf(returnable));
         writeln(out, eventId.toString());
-        super.write(out);
+        super.write(out, gson);
     }
 
     @Override
@@ -109,5 +118,9 @@ public class EventPacket extends Packet {
 
     public Optional<UUID> getTarget() {
         return target;
+    }
+
+    public boolean isReturnable() {
+        return returnable;
     }
 }

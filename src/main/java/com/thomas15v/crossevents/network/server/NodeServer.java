@@ -1,7 +1,9 @@
 package com.thomas15v.crossevents.network.server;
 
 import com.google.common.base.Optional;
+import com.google.gson.Gson;
 import com.thomas15v.crossevents.CrossEventsPlugin;
+import com.thomas15v.crossevents.formatting.GsonBaker;
 import com.thomas15v.crossevents.network.packet.PacketConnection;
 import com.thomas15v.crossevents.network.packet.packets.ServerInformationPacket;
 import com.thomas15v.crossevents.network.packet.packets.LoginPacket;
@@ -67,7 +69,7 @@ public class NodeServer implements Runnable {
         while (run) {
             try {
                 Socket incom = serversocket.accept();
-                PacketConnection connection = new PacketConnection(incom, packetManager);
+                PacketConnection connection = new PacketConnection(incom, packetManager, new GsonBaker());
                 LoginPacket loginPacket = (LoginPacket) connection.readPacket().get();
                 if (loginPacket.getPwd().equals(pwd)) {
                     if (!getServer(loginPacket.getSender()).isPresent()){

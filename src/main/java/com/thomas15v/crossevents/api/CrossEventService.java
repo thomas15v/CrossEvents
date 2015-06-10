@@ -1,9 +1,12 @@
 package com.thomas15v.crossevents.api;
 
 import com.google.common.base.Optional;
+import com.thomas15v.crossevents.formatting.Formatter;
 import org.spongepowered.api.event.Event;
 
+import java.lang.reflect.Type;
 import java.util.UUID;
+import java.util.concurrent.Future;
 
 /**
  * Created by thomas15v on 4/06/15.
@@ -39,6 +42,15 @@ public interface CrossEventService {
      * @return The name of the server
      */
     String getServerName();
+
+    /***
+     *
+     * Use this to add extra serialization. See Gson documentation.
+     *
+     * @param formatter
+     * @param type The type for the formatter
+     */
+    void registerFormatter(Type type, Formatter formatter);
 
 
 }

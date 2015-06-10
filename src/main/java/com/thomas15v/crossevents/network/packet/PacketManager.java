@@ -1,6 +1,7 @@
 package com.thomas15v.crossevents.network.packet;
 
 import com.google.common.base.Optional;
+import com.thomas15v.crossevents.formatting.GsonBaker;
 import com.thomas15v.crossevents.network.packet.packets.*;
 
 import java.lang.reflect.Constructor;

@@ -1,5 +1,6 @@
 package com.thomas15v.crossevents.network.packet.packets;
 
+import com.google.gson.Gson;
 import com.thomas15v.crossevents.network.packet.PacketHandler;
 import com.thomas15v.crossevents.network.server.Server;
 
@@ -34,19 +35,19 @@ public class ServerInformationPacket extends Packet {
 
 
     @Override
-    public void write(BufferedWriter out) throws IOException {
+    public void write(BufferedWriter out, Gson gson) throws IOException {
         writeln(out, serverName);
         writeln(out, serverUUID.toString());
         writeln(out, status.name());
-        super.write(out);
+        super.write(out, gson);
     }
 
     @Override
-    public void read(BufferedReader in) throws IOException {
+    public void read(BufferedReader in, Gson gson) throws IOException {
         serverName = in.readLine();
         serverUUID = UUID.fromString(in.readLine());
         status = Status.valueOf(in.readLine());
-        super.read(in);
+        super.read(in, gson);
     }
 
     @Override

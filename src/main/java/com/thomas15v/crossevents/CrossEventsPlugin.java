@@ -66,7 +66,7 @@ public class CrossEventsPlugin {
             }
 
         try {
-            this.client = new com.thomas15v.crossevents.network.client.NodeClient(config.getHostName(), config.getPort(), config.getPwd(), config.getServerId(), config.getServerName(), event.getGame().getEventManager());
+            this.client = new com.thomas15v.crossevents.network.client.NodeClient(config.getHostName(), config.getPort(), config.getPwd(), config.getServerId(), config.getServerName(), event.getGame());
             this.client.connect();
             logger.info("CrossEventsClient connecting to " + config.getHostName() + ":" + config.getPort());
             this.client.start();

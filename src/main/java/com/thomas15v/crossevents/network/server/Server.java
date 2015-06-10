@@ -50,8 +50,10 @@ public class Server extends PacketHandler implements Runnable, ICrossConnectable
             catch (Exception e) {
                 if (e instanceof NumberFormatException)
                     disconect("Server " + uuid + " Has Disconnected!");
-                else
+                else {
                     disconect("Server " + uuid + " Has Disconnected!: " + e.toString());
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -67,7 +69,7 @@ public class Server extends PacketHandler implements Runnable, ICrossConnectable
 
     @Override
     public void handle(EventPacket packet) {
-        if (packet.getEvent().get() instanceof Returnable || packet.getEvent().get() instanceof Cancellable){
+        if (packet.isReturnable()){
             Optional<Server> server = nodeserver.getServer(packet.getHop());
             packet.hop();
             if (server.isPresent()){
@@ -78,6 +80,11 @@ public class Server extends PacketHandler implements Runnable, ICrossConnectable
                 }
             }
             else nodeserver.getServer(packet.getSender()).get().writePacket(packet);
+        }
+        else if (packet.getTarget().isPresent()){
+            Optional<Server> server = nodeserver.getServer(packet.getTarget().get());
+            if (server.isPresent())
+                server.get().writePacket(packet);
         }
         else nodeserver.writePacket(packet);
     }

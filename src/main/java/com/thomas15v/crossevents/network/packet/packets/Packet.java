@@ -16,7 +16,6 @@ import java.util.UUID;
  */
 public abstract class Packet {
 
-    protected static final Gson gson = new Gson();
     private UUID sender;
 
     public Packet(){}
@@ -25,11 +24,11 @@ public abstract class Packet {
         this.sender = sender;
     }
 
-    public void read(BufferedReader in) throws IOException{
+    public void read(BufferedReader in, Gson gson) throws IOException{
         this.sender = UUID.fromString(in.readLine());
     }
 
-    public void write(BufferedWriter out) throws IOException{
+    public void write(BufferedWriter out, Gson gson) throws IOException{
         writeln(out, sender.toString());
     }
 
@@ -46,6 +45,6 @@ public abstract class Packet {
 
     @Override
     public String toString() {
-        return gson.toJson(this);
+        return new Gson().toJson(this);
     }
 }

@@ -5,17 +5,21 @@ import com.thomas15v.crossevents.CrossEventsPlugin;
 import com.thomas15v.crossevents.api.CrossEventService;
 import com.thomas15v.crossevents.api.Returnable;
 import com.thomas15v.crossevents.api.Server;
+import com.thomas15v.crossevents.formatting.*;
+import com.thomas15v.crossevents.formatting.Formatter;
 import com.thomas15v.crossevents.network.ICrossConnectable;
 import com.thomas15v.crossevents.network.packet.PacketHandler;
 import com.thomas15v.crossevents.network.packet.packets.*;
 import com.thomas15v.crossevents.network.packet.PacketManager;
 import com.thomas15v.crossevents.network.packet.PacketConnection;
 import org.slf4j.Logger;
+import org.spongepowered.api.Game;
 import org.spongepowered.api.event.Cancellable;
 import org.spongepowered.api.event.Event;
 import org.spongepowered.api.service.event.EventManager;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.*;
@@ -39,14 +43,16 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     private String servername;
     private EventManager eventManager;
     private Map<UUID, Server> onlineServers = new HashMap<UUID, Server>();
+    private GsonBaker gsonBaker;
 
-    public NodeClient(String hostname, int port, String pwd, UUID uuid, String servername,  EventManager eventManager){
+    public NodeClient(String hostname, int port, String pwd, UUID uuid, String servername, Game game){
         this.servername = servername;
-        this.eventManager = eventManager;
+        this.eventManager = game.getEventManager();
         this.hostname = hostname;
         this.port = port;
         this.pwd = pwd;
         this.uuid = uuid;
+        this.gsonBaker = new GsonBaker(game.getServer());
     }
 
     public void connect() throws IOException {
@@ -57,7 +63,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
         Socket socket = new Socket();
         socket.connect(new InetSocketAddress(hostname, port));
         this.packetManager = new PacketManager();
-        this.connection = new PacketConnection(socket, packetManager);
+        this.connection = new PacketConnection(socket, packetManager, gsonBaker);
         this.connection.writePacket(new LoginPacket(uuid, pwd, servername));
     }
 
@@ -68,7 +74,6 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
                 Optional<Packet> packet = connection.readPacket();
                 if (packet.isPresent())
                     packet.get().handle(this);
-            //}catch (InterruptedException e){
             }
             catch (Exception e) {
                 logger.info("Lost Connection with Server");
@@ -160,7 +165,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     @Override
     public <T extends Event> T callEvent(T event, UUID target) {
         if (event instanceof Returnable || event instanceof Cancellable) {
-            EventPacket packet = new EventPacket(this.uuid, event, target);
+            EventPacket packet = new EventPacket(this.uuid, event, target, true);
             writePacket(packet);
             int ticks = onlineServers.size() * 3;
             while (!callbackEvents.containsKey(packet.getEventId()))
@@ -180,7 +185,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
             return (T) returnevent;
         }
         else {
-            writePacket(new EventPacket(target, event, target));
+            writePacket(new EventPacket(target, event, target, false));
             return event;
         }
     }
@@ -193,6 +198,11 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     @Override
     public String getServerName() {
         return servername;
+    }
+
+    @Override
+    public void registerFormatter(Type type, Formatter formatter) {
+        gsonBaker.registerFormatter(type, formatter);
     }
 
     public void start(){
