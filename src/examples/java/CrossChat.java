@@ -8,7 +8,6 @@ import org.spongepowered.api.event.entity.player.PlayerChatEvent;
 import org.spongepowered.api.event.state.ServerStartedEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.Texts;
 
 import java.util.concurrent.TimeoutException;
 
