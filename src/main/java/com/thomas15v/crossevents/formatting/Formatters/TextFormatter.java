@@ -14,7 +14,6 @@ import java.lang.reflect.Type;
 public class TextFormatter implements Formatter<Text> {
     @Override
     public Text deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        System.out.println("Worked! tho");
         try {
             return Texts.json().from(json.getAsString());
         } catch (TextMessageException e) {
@@ -25,7 +24,6 @@ public class TextFormatter implements Formatter<Text> {
 
     @Override
     public JsonElement serialize(Text src, Type typeOfSrc, JsonSerializationContext context) {
-        System.out.println("Worked!");
         return new JsonPrimitive(Texts.json().to(src));
     }
 }
