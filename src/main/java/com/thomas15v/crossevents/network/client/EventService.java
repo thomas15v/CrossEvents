@@ -17,6 +17,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.*;
 
 /**
  * Created by thomas15v on 10/06/15.
@@ -25,9 +26,10 @@ public class EventService implements CrossEventService {
 
     private NodeClient nodeClient;
     private Game game;
-    private volatile Map<UUID, Event> callbackEvents = new HashMap<UUID, Event>();
+    private volatile Map<UUID, BlockingQueue<Event>> callbackEvents = new HashMap<UUID, BlockingQueue<Event>>();
     private Logger logger = CrossEventsPlugin.getInstance().getLogger();
     private EventManager eventManager;
+    private final ExecutorService pool = Executors.newFixedThreadPool(10);
 
     public EventService(NodeClient nodeClient, Game game){
         this.nodeClient = nodeClient;
@@ -42,37 +44,57 @@ public class EventService implements CrossEventService {
 
     @Override
     public <T extends Event> T callEvent(T event, UUID target) {
+        try {
+            return callEventAsync(event, target).get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+        return event;
+    }
+
+    @Override
+    public <T extends Event> Future<T> callEventAsync(final T event, final UUID target) {
         if (event instanceof Returnable || event instanceof Cancellable) {
-            EventPacket packet = new EventPacket(nodeClient.getConnectionInfo().getUuid(), event, target, true);
-            nodeClient.writePacket(packet);
-            int ticks = nodeClient.getOnlineServers().size() * 3;
-            while (!callbackEvents.containsKey(packet.getEventId()))
-                try {
-                    logger.debug("Waiting");
-                    Thread.sleep(1);
-                    ticks--;
-                    if (ticks == 0) {
-                        logger.warn("Return event took to long, returning normal event!");
-                        return event;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+            return pool.submit(new Callable<T>() {
+                @Override
+                public T call() throws Exception {
+                    EventPacket packet = new EventPacket(nodeClient.getConnectionInfo().getUuid(), event, target, true);
+                    nodeClient.writePacket(packet);
+                    final BlockingQueue<T> packetBlockingQueue = new SynchronousQueue<T>();
+                    callbackEvents.put(packet.getEventId(), (BlockingQueue<Event>) packetBlockingQueue);
+                    return packetBlockingQueue.take();
                 }
-            Event returnevent = callbackEvents.get(packet.getEventId());
-            callbackEvents.remove(packet.getEventId());
-            return (T) returnevent;
+            });
         }
         else {
-            nodeClient.writePacket(new EventPacket(nodeClient.getConnectionInfo().getUuid(), event, target, false));
-            return event;
+            return pool.submit(new Callable<T>() {
+                @Override
+                public T call() throws Exception {
+                    nodeClient.writePacket(new EventPacket(nodeClient.getConnectionInfo().getUuid(), event, target, false));
+                    return event;
+                }
+            });
         }
     }
 
+    @Override
+    public <T extends Event> Future<T> callEventAsync(T event) {
+        return callEventAsync(event, null);
+    }
+
     public void postPacket(EventPacket packet) {
-        if (packet.getSender().equals(nodeClient.getConnectionInfo().getUuid()))
-        {
-            callbackEvents.put(packet.getEventId(), packet.getEvent().get());
-        }else {
+        if (packet.getSender().equals(nodeClient.getConnectionInfo().getUuid())) {
+            try {
+                callbackEvents.get(packet.getEventId()).put(packet.getEvent().get());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        else {
             Event event = packet.getEvent().get();
             logger.debug(event.toString());
             eventManager.post(event);

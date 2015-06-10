@@ -28,6 +28,20 @@ public interface CrossEventService {
      */
     <T extends Event> T callEvent(T event, UUID target);
 
+    /**
+     *
+     * @param event The event you want to pass.
+     * @param target The uniqueId of the target server you want to send the event to.
+     * @return
+     */
+    <T extends Event> Future<T> callEventAsync(T event, UUID target);
+
+    /**
+     *
+     * @param event The event you want to pass.
+     * @return
+     */
+    <T extends Event> Future<T> callEventAsync(T event);
 
     /***
      *

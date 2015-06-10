@@ -59,10 +59,7 @@ public class EventPacket extends Packet {
             this.target = Optional.of(UUID.fromString(target));
         hop = Integer.parseInt(in.readLine());
         event = parseEvent(in.readLine(), in.readLine(), gson);
-        //todo remove this
-        String test = in.readLine();
-        System.out.println(test);
-        returnable = Boolean.parseBoolean(test);
+        returnable = Boolean.parseBoolean(in.readLine());
         eventId = UUID.fromString(in.readLine());
         super.read(in, gson);
     }
@@ -73,7 +70,7 @@ public class EventPacket extends Packet {
         try {
             return Optional.of(gson.fromJson(eventData,(Class<? extends Event>) Class.forName(eventClass)));
         } catch (Exception e) {
-            CrossEventsPlugin.getInstance().getLogger().debug("Could not find event class " + eventClass);
+            CrossEventsPlugin.getInstance().getLogger().debug("Could not create event object : " + e.toString());
             return Optional.absent();
         }
     }
@@ -93,7 +90,6 @@ public class EventPacket extends Packet {
             writeln(out, eventClass);
             writeln(out, eventData);
         }
-        System.out.println(String.valueOf(returnable));
         writeln(out, String.valueOf(returnable));
         writeln(out, eventId.toString());
         super.write(out, gson);
