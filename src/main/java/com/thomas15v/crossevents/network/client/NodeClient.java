@@ -82,6 +82,8 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     public void handle(EventPacket packet) {
         if (packet.getEvent().isPresent())
             service.postPacket(packet);
+        else
+            writePacket(packet);
     }
 
     @Override
