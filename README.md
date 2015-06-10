@@ -43,5 +43,5 @@ dependencies {
 }
 ```
 
-[##Examples](https://github.com/thomas15v/CrossEvents/tree/master/src/examples/java)
+##[Examples](https://github.com/thomas15v/CrossEvents/tree/master/src/examples/java)
 
