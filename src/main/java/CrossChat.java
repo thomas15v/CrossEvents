@@ -5,6 +5,7 @@ import org.spongepowered.api.event.Subscribe;
 import org.spongepowered.api.event.entity.player.PlayerChatEvent;
 import org.spongepowered.api.event.state.ServerStartedEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.Texts;
 
 @Plugin(id="CrossChat", name="CrossChat", version="0.1", dependencies="required-after:CrossEvents;")
@@ -23,28 +24,27 @@ public class CrossChat
     public class CrossChatEvent
             extends AbstractEvent
     {
-        private String message;
+        private Text message;
 
-        public CrossChatEvent(String message)
+        public CrossChatEvent(Text message)
         {
             this.message = message;
         }
 
-        public String getMessage()
-        {
-            return this.message;
+        public Text getMessage() {
+            return message;
         }
     }
 
     @Subscribe
     public void PlayerChatEvent(CrossChatEvent event)
     {
-        this.game.getServer().getBroadcastSink().sendMessage(Texts.parseJson(event.getMessage()));
+        this.game.getServer().getBroadcastSink().sendMessage(event.getMessage());
     }
 
     @Subscribe
     public void PlayerChatEvent(PlayerChatEvent event)
     {
-        this.service.callEvent(new CrossChatEvent(Texts.toJson(event.getNewMessage())));
+        this.service.callEvent(new CrossChatEvent(event.getNewMessage()));
     }
 }

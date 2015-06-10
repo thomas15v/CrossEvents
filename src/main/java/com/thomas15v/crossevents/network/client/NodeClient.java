@@ -185,7 +185,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
             return (T) returnevent;
         }
         else {
-            writePacket(new EventPacket(target, event, target, false));
+            writePacket(new EventPacket(this.uuid, event, target, false));
             return event;
         }
     }
