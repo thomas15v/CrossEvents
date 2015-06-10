@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.thomas15v.crossevents.api.CrossEventService;
 import com.thomas15v.crossevents.config.Config;
 import com.thomas15v.crossevents.network.server.NodeServer;
+import com.thomas15v.crossevents.util.ConnectionInfo;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.event.Subscribe;
@@ -66,7 +67,7 @@ public class CrossEventsPlugin {
             }
 
         try {
-            this.client = new com.thomas15v.crossevents.network.client.NodeClient(config.getHostName(), config.getPort(), config.getPwd(), config.getServerId(), config.getServerName(), event.getGame());
+            this.client = new com.thomas15v.crossevents.network.client.NodeClient(new ConnectionInfo(config.getHostName(), config.getPort(), config.getPwd(), config.getServerId(), config.getServerName()), event.getGame());
             this.client.connect();
             logger.info("CrossEventsClient connecting to " + config.getHostName() + ":" + config.getPort());
             this.client.start();

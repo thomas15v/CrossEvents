@@ -12,6 +12,7 @@ import com.thomas15v.crossevents.network.packet.PacketHandler;
 import com.thomas15v.crossevents.network.packet.packets.*;
 import com.thomas15v.crossevents.network.packet.PacketManager;
 import com.thomas15v.crossevents.network.packet.PacketConnection;
+import com.thomas15v.crossevents.util.ConnectionInfo;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.event.Cancellable;
@@ -29,29 +30,21 @@ import java.util.*;
  */
 public class NodeClient extends PacketHandler implements Runnable, ICrossConnectable, CrossEventService {
 
-    private final String hostname;
-    private final int port;
     private PacketManager packetManager;
     private PacketConnection connection;
-    private UUID uuid;
     private volatile Map<UUID, Event> callbackEvents = new HashMap<UUID, Event>();
     private Thread thread;
-    private String pwd;
     private boolean running = true;
     private boolean connected;
     private Logger logger = CrossEventsPlugin.getInstance().getLogger();
-    private String servername;
     private EventManager eventManager;
     private Map<UUID, Server> onlineServers = new HashMap<UUID, Server>();
     private GsonBaker gsonBaker;
+    private ConnectionInfo ci;
 
-    public NodeClient(String hostname, int port, String pwd, UUID uuid, String servername, Game game){
-        this.servername = servername;
+    public NodeClient(ConnectionInfo connectionInfo, Game game){
+        this.ci = connectionInfo;
         this.eventManager = game.getEventManager();
-        this.hostname = hostname;
-        this.port = port;
-        this.pwd = pwd;
-        this.uuid = uuid;
         this.gsonBaker = new GsonBaker(game.getServer());
     }
 
@@ -61,10 +54,10 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
             connected = false;
         }
         Socket socket = new Socket();
-        socket.connect(new InetSocketAddress(hostname, port));
+        socket.connect(new InetSocketAddress(ci.getHostname(), ci.getPort()));
         this.packetManager = new PacketManager();
         this.connection = new PacketConnection(socket, packetManager, gsonBaker);
-        this.connection.writePacket(new LoginPacket(uuid, pwd, servername));
+        this.connection.writePacket(new LoginPacket(ci.getUuid(), ci.getPwd(), ci.getServername()));
     }
 
     @Override
@@ -85,7 +78,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     @Override
     public void handle(EventPacket packet) {
         if (packet.getEvent().isPresent())
-            if (packet.getSender().equals(uuid))
+            if (packet.getSender().equals(ci.getUuid()))
             {
                 callbackEvents.put(packet.getEventId(), packet.getEvent().get());
             }else {
@@ -136,7 +129,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     public void handle(LogoutPacket packet) throws Exception {
         if (packet.getMessage().equals("DUPLICATEDID")) {
             CrossEventsPlugin.getInstance().getConfig().resetServerId();
-            this.uuid = CrossEventsPlugin.getInstance().getConfig().getServerId();
+            ci.setUuid(CrossEventsPlugin.getInstance().getConfig().getServerId());
             reconnect(false);
         }
         else
@@ -165,7 +158,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     @Override
     public <T extends Event> T callEvent(T event, UUID target) {
         if (event instanceof Returnable || event instanceof Cancellable) {
-            EventPacket packet = new EventPacket(this.uuid, event, target, true);
+            EventPacket packet = new EventPacket(ci.getUuid(), event, target, true);
             writePacket(packet);
             int ticks = onlineServers.size() * 3;
             while (!callbackEvents.containsKey(packet.getEventId()))
@@ -185,7 +178,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
             return (T) returnevent;
         }
         else {
-            writePacket(new EventPacket(this.uuid, event, target, false));
+            writePacket(new EventPacket(ci.getUuid(), event, target, false));
             return event;
         }
     }
@@ -197,7 +190,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
 
     @Override
     public String getServerName() {
-        return servername;
+        return ci.getServername();
     }
 
     @Override
@@ -214,7 +207,7 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
         running = false;
         thread.interrupt();
         connected = false;
-        writePacket(new LogoutPacket(uuid, "SHUTDOWN" ));
+        writePacket(new LogoutPacket(ci.getUuid(), "SHUTDOWN" ));
         try {
             Thread.sleep(10);
             connection.close();
