@@ -38,19 +38,17 @@ public class EventService implements CrossEventService {
     }
 
     @Override
-    public <T extends Event> T callEvent(T event) {
+    public <T extends Event> T callEvent(T event) throws TimeoutException {
         return callEvent(event, null);
     }
 
     @Override
-    public <T extends Event> T callEvent(T event, UUID target) {
+    public <T extends Event> T callEvent(T event, UUID target) throws TimeoutException {
         try {
-            return callEventAsync(event, target).get(10, TimeUnit.SECONDS);
+             return callEventAsync(event, target).get(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
             e.printStackTrace();
         }
         return event;

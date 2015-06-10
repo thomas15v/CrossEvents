@@ -3,6 +3,7 @@ package com.thomas15v.crossevents.api;
 import org.spongepowered.api.event.Event;
 
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by thomas15v on 6/06/15.
@@ -15,7 +16,7 @@ public interface Server {
      * @return In case the event implements a {@link com.thomas15v.crossevents.api.Returnable} or {@link org.spongepowered.api.event.Cancellable}.
      * It will return the changed event. Otherwise it will return the same event you already passed.
      */
-    <T extends Event> T callEvent(T event);
+    <T extends Event> T callEvent(T event) throws TimeoutException;
 
     /**
      *

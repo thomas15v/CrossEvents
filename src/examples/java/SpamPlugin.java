@@ -13,6 +13,7 @@ import org.spongepowered.api.text.format.TextColors;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by thomas15v on 9/06/15.
@@ -52,24 +53,19 @@ public class SpamPlugin {
     }
 
     @Subscribe
-    public void onEnabled(final ServerStartedEvent event){
+    public void onEnabled(final ServerStartedEvent event) throws TimeoutException {
         this.service = event.getGame().getServiceManager().provide(CrossEventService.class).get();
-
-
-        long startTime = System.currentTimeMillis();
-        System.out.println(new Gson().toJson(new spamEvent(1711515, "Hello")));
-        service.callEvent((new spamEvent(1711515, "Hello")));
-                System.out.println("Event ended");
-        long endTime = System.currentTimeMillis();
-        long duration = (endTime - startTime);
-        System.out.println(duration);
 
         event.getGame().getAsyncScheduler().runRepeatingTask(this, new Runnable() {
             @Override
             public void run() {
                 long startTime = System.currentTimeMillis();
                 System.out.println(new Gson().toJson(new spamEvent(1711515,"Hello")));
-                service.callEvent((new spamEvent(1711515, "Hello")));
+                try {
+                    service.callEvent((new spamEvent(1711515, "Hello")));
+                } catch (TimeoutException e) {
+                    e.printStackTrace();
+                }
                 System.out.println("Event ended");
                 long endTime = System.currentTimeMillis();
                 long duration = (endTime - startTime);

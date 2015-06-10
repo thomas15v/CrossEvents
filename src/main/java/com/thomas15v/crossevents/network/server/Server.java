@@ -12,6 +12,7 @@ import com.thomas15v.crossevents.network.packet.packets.ServerInformationPacket;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -68,7 +69,11 @@ public class Server extends PacketHandler implements Runnable, ICrossConnectable
     @Override
     public void handle(EventPacket packet) {
         if (packet.isReturnable()){
-            Optional<Server> server = nodeserver.getServer(packet.getHop());
+            Optional<Server> server;
+            if (packet.getTarget().isPresent() && packet.getHop() == 0)
+                server = nodeserver.getServer(packet.getTarget().get());
+            else
+                server = nodeserver.getServer(packet.getHop());
             packet.hop();
             if (server.isPresent()){
                 if (!server.get().getUniqueId().equals(getUniqueId())){

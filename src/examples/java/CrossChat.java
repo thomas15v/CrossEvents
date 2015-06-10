@@ -1,4 +1,6 @@
+import com.google.inject.Inject;
 import com.thomas15v.crossevents.api.CrossEventService;
+import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.event.AbstractEvent;
 import org.spongepowered.api.event.Subscribe;
@@ -8,11 +10,17 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.Texts;
 
+import java.util.concurrent.TimeoutException;
+
 @Plugin(id="CrossChat", name="CrossChat", version="0.1", dependencies="required-after:CrossEvents;")
 public class CrossChat
 {
     private CrossEventService service;
     private Game game;
+
+
+    @Inject
+    private Logger logger;
 
     @Subscribe
     public void onEnable(ServerStartedEvent event)
@@ -45,6 +53,10 @@ public class CrossChat
     @Subscribe
     public void PlayerChatEvent(PlayerChatEvent event)
     {
-        this.service.callEvent(new CrossChatEvent(event.getNewMessage()));
+        try {
+            this.service.callEvent(new CrossChatEvent(event.getNewMessage()));
+        } catch (TimeoutException e) {
+            logger.info("Failed to pass event to server!");
+        }
     }
 }

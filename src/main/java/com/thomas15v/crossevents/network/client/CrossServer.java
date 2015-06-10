@@ -4,6 +4,7 @@ import com.thomas15v.crossevents.api.Server;
 import org.spongepowered.api.event.Event;
 
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by thomas15v on 6/06/15.
@@ -21,7 +22,7 @@ public class CrossServer implements Server {
     }
 
     @Override
-    public <T extends Event> T callEvent(T event) {
+    public <T extends Event> T callEvent(T event) throws TimeoutException {
         nodeClient.getService().callEvent(event, uuid);
         return event;
     }
