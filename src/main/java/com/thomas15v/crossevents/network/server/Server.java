@@ -2,7 +2,6 @@ package com.thomas15v.crossevents.network.server;
 
 import com.google.common.base.Optional;
 import com.thomas15v.crossevents.CrossEventsPlugin;
-import com.thomas15v.crossevents.api.Returnable;
 import com.thomas15v.crossevents.network.ICrossConnectable;
 import com.thomas15v.crossevents.network.packet.PacketConnection;
 import com.thomas15v.crossevents.network.packet.PacketHandler;
@@ -11,7 +10,6 @@ import com.thomas15v.crossevents.network.packet.packets.LogoutPacket;
 import com.thomas15v.crossevents.network.packet.packets.Packet;
 import com.thomas15v.crossevents.network.packet.packets.ServerInformationPacket;
 import org.slf4j.Logger;
-import org.spongepowered.api.event.Cancellable;
 
 import java.io.IOException;
 import java.util.UUID;

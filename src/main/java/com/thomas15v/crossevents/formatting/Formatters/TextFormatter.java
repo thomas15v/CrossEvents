@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.thomas15v.crossevents.formatting.Formatter;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.Texts;
+import org.spongepowered.api.util.TextMessageException;
 
 import java.lang.reflect.Type;
 
@@ -13,11 +14,18 @@ import java.lang.reflect.Type;
 public class TextFormatter implements Formatter<Text> {
     @Override
     public Text deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        return Texts.parseJson(json.getAsString());
+        System.out.println("Worked! tho");
+        try {
+            return Texts.json().from(json.getAsString());
+        } catch (TextMessageException e) {
+            e.printStackTrace();
+        }
+        return Texts.of();
     }
 
     @Override
     public JsonElement serialize(Text src, Type typeOfSrc, JsonSerializationContext context) {
-        return new JsonPrimitive(Texts.toJson(src));
+        System.out.println("Worked!");
+        return new JsonPrimitive(Texts.json().to(src));
     }
 }
