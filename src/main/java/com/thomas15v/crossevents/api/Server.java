@@ -15,7 +15,9 @@ public interface Server {
      * @param event The event you want to pass to this server.
      * @return In case the event implements a {@link com.thomas15v.crossevents.api.Returnable} or {@link org.spongepowered.api.event.Cancellable}.
      * It will return the changed event. Otherwise it will return the same event you already passed.
+     * @throws TimeoutException When the server can't be reached.
      */
+
     <T extends Event> T callEvent(T event) throws TimeoutException;
 
     /**

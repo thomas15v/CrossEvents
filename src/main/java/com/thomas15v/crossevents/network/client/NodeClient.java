@@ -5,6 +5,8 @@ import com.thomas15v.crossevents.CrossEventsPlugin;
 import com.thomas15v.crossevents.api.CrossEventService;
 import com.thomas15v.crossevents.api.Returnable;
 import com.thomas15v.crossevents.api.Server;
+import com.thomas15v.crossevents.api.events.ServerDownEvent;
+import com.thomas15v.crossevents.api.events.ServerUpEvent;
 import com.thomas15v.crossevents.formatting.*;
 import com.thomas15v.crossevents.formatting.Formatter;
 import com.thomas15v.crossevents.network.ICrossConnectable;
@@ -39,10 +41,12 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
     private Map<UUID, Server> onlineServers = new HashMap<UUID, Server>();
     private GsonBaker gsonBaker;
     private ConnectionInfo ci;
+    private Game game;
     private EventService service;
 
     public NodeClient(ConnectionInfo connectionInfo, Game game){
         this.ci = connectionInfo;
+        this.game = game;
         this.gsonBaker = new GsonBaker(game.getServer());
         this.service = new EventService(this, game);
     }
@@ -82,14 +86,21 @@ public class NodeClient extends PacketHandler implements Runnable, ICrossConnect
 
     @Override
     public void handle(ServerInformationPacket packet) throws Exception {
-        if (!connected) {
+        if (!connected && packet.getUniqueServerId().equals(ci.getUuid())) {
             logger.info("Succesfully Connected to Server!");
             connected = true;
         }
-        if (packet.getStatus() == ServerInformationPacket.Status.OFFLINE)
+        if (packet.getStatus() == ServerInformationPacket.Status.OFFLINE) {
+            if (!packet.getUniqueServerId().equals(ci.getUuid()))
+                game.getEventManager().post(new ServerDownEvent(onlineServers.get(packet.getUniqueServerId())));
             onlineServers.remove(packet.getUniqueServerId());
-        else
-            onlineServers.put(packet.getUniqueServerId(), new CrossServer(this, packet.getUniqueServerId(), packet.getServerName()));
+        }
+        else {
+            Server server = new CrossServer(this, packet.getUniqueServerId(), packet.getServerName());
+            if (!packet.getUniqueServerId().equals(ci.getUuid()))
+                game.getEventManager().post(new ServerUpEvent(server));
+            onlineServers.put(packet.getUniqueServerId(), server);
+        }
     }
 
     @Override
