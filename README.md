@@ -20,7 +20,7 @@ A small Library to call sponge events across servers
         <dependency>
         <groupId>com.thomas15v</groupId>
         <artifactId>crossevents</artifactId>
-        <version>0.1</version>
+        <version>0.2-beta</version>
       </dependency>
     </dependencies>
     [...]
@@ -39,7 +39,7 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
-    compile "com.thomas15v:crossevents:0.1"
+    compile "com.thomas15v:crossevents:0.2-beta"
 }
 ```
 
