@@ -22,7 +22,7 @@ public class CrossServer implements Server {
 
     @Override
     public <T extends Event> T callEvent(T event) {
-        nodeClient.callEvent(event);
+        nodeClient.getService().callEvent(event, uuid);
         return event;
     }
 

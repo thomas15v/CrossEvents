@@ -76,7 +76,7 @@ public class CrossEventsPlugin {
         }
 
         try {
-            event.getGame().getServiceManager().setProvider(this, CrossEventService.class, client);
+            event.getGame().getServiceManager().setProvider(this, CrossEventService.class, client.getService());
         } catch (ProviderExistsException e) {
             logger.error("Ehm, Seems somebody already took the exact classname of my service.... . Does this make any sense ? Go check your plugins if their aren't 2 versions of this plugin... .");
         }
